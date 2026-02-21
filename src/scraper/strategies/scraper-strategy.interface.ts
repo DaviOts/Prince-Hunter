@@ -11,4 +11,5 @@ export type PriceResult = {
   discountPercent: number;
   storeSlug: string;
   url: string;
+  canonicalTitle: string; //use to standardize title(slug, search etc)
 };
