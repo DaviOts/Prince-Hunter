@@ -72,11 +72,56 @@ export class GamesService {
     return this.prisma.game.findMany({
       include: {
         prices: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
           include: {
             store: true,
           },
         },
       },
     });
+  }
+
+  //find game by slug and return all prices
+  async findOne(slug: string) {
+    const gameWithPrices = await this.prisma.game.findUnique({
+      where: { slug: slug },
+      include: {
+        prices: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            store: true,
+          },
+        },
+      },
+    });
+    return gameWithPrices;
+  }
+
+  //find game by title
+  async findTitleGame(search: string) {
+    const game = await this.prisma.game.findMany({
+      where: {
+        title: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        prices: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            store: true,
+          },
+        },
+      },
+    });
+    return game;
   }
 }
