@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateGameDto } from './dto/create-game.dto';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { ScraperService } from 'src/scraper/scraper.service';
+import { generateSlug } from 'src/common/utils';
 
 @Injectable()
 export class GamesService {
@@ -15,13 +16,7 @@ export class GamesService {
     const prices = await this.scraperService.scrapeAll(createGameDto.title);
 
     const canonicalTitle = prices[0]?.canonicalTitle ?? createGameDto.title;
-    const slug = canonicalTitle
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/\s/g, '-')
-      .replace(/[^\u0000-\u007F]/g, '')
-      .trim()
-      .replaceAll(/[^a-z0-9-]/g, '');
+    const slug = generateSlug(canonicalTitle);
 
     const game = await this.prisma.game.upsert({
       where: { slug: slug },

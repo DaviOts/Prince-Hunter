@@ -3,18 +3,19 @@ import { PriceResult, ScraperStrategy } from './scraper-strategy.interface';
 export class SteamStrategy implements ScraperStrategy {
   readonly storeSlug = 'steam';
   //search game in steam and get price
-  async getPrice(gameTitle: string): Promise<PriceResult | null> {
+  async getPrice(gameTitle: string): Promise<PriceResult[]> {
     try {
       const url = `https://store.steampowered.com/api/storesearch/?term=${gameTitle}&l=english&cc=BR`;
       const response = await fetch(url);
       const data = await response.json();
-      return await this.getPriceBySteamAppId(
+      const price = await this.getPriceBySteamAppId(
         data.items[0].id,
         data.items[0].name,
       );
+      return price ? [price] : []; //wrap in array or return empty
     } catch (error) {
       console.error(error);
-      return null;
+      return []; //empty array instead of null
     }
   }
   //get price by steam app id
