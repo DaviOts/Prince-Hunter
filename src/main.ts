@@ -6,6 +6,12 @@ import { ZodValidationPipe } from 'nestjs-zod';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: process.env.ORIGIN,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true, //cookies or auth headers
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Prince Hunter API')

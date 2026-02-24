@@ -9,6 +9,7 @@ import { ScraperModule } from './scraper/scraper.module';
 import { CacheModule } from './cache/cache.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { APP_GUARD } from '@nestjs/core';
     StoresModule,
     ScraperModule,
     CacheModule,
+    //rate limiting
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -24,6 +26,14 @@ import { APP_GUARD } from '@nestjs/core';
           limit: 100,
         },
       ],
+    }),
+    //queue system
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST,
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+      },
     }),
   ],
   controllers: [AppController],
