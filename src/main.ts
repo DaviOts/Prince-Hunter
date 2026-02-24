@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { HttpExceptionFilter } from './common/filters/HttpExceptionFilter';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ZodValidationPipe } from 'nestjs-zod';
@@ -16,6 +17,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.useGlobalPipes(new ZodValidationPipe());
+  app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();
