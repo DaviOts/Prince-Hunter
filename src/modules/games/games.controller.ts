@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { ApiQuery } from '@nestjs/swagger';
@@ -7,6 +16,7 @@ import { ApiQuery } from '@nestjs/swagger';
 export class GamesController {
   constructor(private readonly gamesService: GamesService) {}
 
+  @HttpCode(HttpStatus.ACCEPTED)
   @Post()
   create(@Body() createGameDto: CreateGameDto) {
     return this.gamesService.create(createGameDto);
@@ -23,8 +33,23 @@ export class GamesController {
     return this.gamesService.findAll();
   }
 
-  @Get(':slug/prices')
+  @Get(':slug/best-price')
+  findBestPrice(@Param('slug') slug: string) {
+    return this.gamesService.findBestPrice(slug);
+  }
+
+  @Get(':slug/price-history')
   findPriceHistory(@Param('slug') slug: string) {
-    return this.gamesService.findOne(slug);
+    return this.gamesService.findPriceHistory(slug);
+  }
+
+  @Get(':slug/compare')
+  findCompare(@Param('slug') slug: string) {
+    return this.gamesService.findCompare(slug);
+  }
+
+  @Get(':slug/lowest')
+  findLowest(@Param('slug') slug: string) {
+    return this.gamesService.findLowest(slug);
   }
 }

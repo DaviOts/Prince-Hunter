@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGameDto } from './dto/create-game.dto';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { generateSlug } from 'src/common/utils';
@@ -89,5 +89,42 @@ export class GamesService {
       },
     });
     return game;
+  }
+
+  async findBestPrice(slug: string) {
+    const lastestPrices = await this.prisma.price.findMany({
+      where: {
+        game: { slug },
+      },
+      distinct: ['storeId'],
+      orderBy: { createdAt: 'desc' },
+      include: {
+        store: true,
+      },
+    });
+
+    if (!lastestPrices.length) {
+      throw new NotFoundException('No prices found for this game');
+    }
+
+    const bestPrice = lastestPrices.reduce((min, current) => {
+      return current.finalPrice.toNumber() < min.finalPrice.toNumber()
+        ? current
+        : min;
+    });
+
+    return bestPrice;
+  }
+
+  async findPriceHistory(slug: string) {
+    return [];
+  }
+
+  async findCompare(slug: string) {
+    return [];
+  }
+
+  async findLowest(slug: string) {
+    return [];
   }
 }
