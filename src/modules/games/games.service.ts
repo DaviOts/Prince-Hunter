@@ -135,7 +135,22 @@ export class GamesService {
   }
 
   async findCompare(slug: string) {
-    return [];
+    const lastestPrices = await this.prisma.price.findMany({
+      where: {
+        game: { slug },
+      },
+      distinct: ['storeId'],
+      orderBy: { createdAt: 'desc' },
+      include: {
+        store: true,
+      },
+    });
+
+    if (!lastestPrices.length) {
+      throw new NotFoundException('No prices found for this game');
+    }
+
+    return lastestPrices;
   }
 
   async findLowest(slug: string) {
