@@ -50,24 +50,6 @@ export class GamesService {
     });
   }
 
-  //find game by slug and return all prices
-  async findOne(slug: string) {
-    const gameWithPrices = await this.prisma.game.findUnique({
-      where: { slug: slug },
-      include: {
-        prices: {
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            store: true,
-          },
-        },
-      },
-    });
-    return gameWithPrices;
-  }
-
   //find game by title
   async findTitleGame(search: string) {
     const game = await this.prisma.game.findMany({
@@ -92,7 +74,7 @@ export class GamesService {
   }
 
   async findBestPrice(slug: string) {
-    const lastestPrices = await this.prisma.price.findMany({
+    const latestPrices = await this.prisma.price.findMany({
       where: {
         game: { slug },
       },
@@ -103,21 +85,23 @@ export class GamesService {
       },
     });
 
-    if (!lastestPrices.length) {
+    if (!latestPrices.length) {
       throw new NotFoundException('No prices found for this game');
     }
 
-    const bestPrice = lastestPrices.reduce((min, current) => {
-      return current.finalPrice.toNumber() < min.finalPrice.toNumber()
-        ? current
-        : min;
-    });
+    const minValue = Math.min(
+      ...latestPrices.map((price) => price.finalPrice.toNumber()),
+    );
+
+    const bestPrice = latestPrices.filter(
+      (price) => price.finalPrice.toNumber() === minValue,
+    );
 
     return bestPrice;
   }
 
   async findPriceHistory(slug: string) {
-    const lastestPrices = await this.prisma.price.findMany({
+    const priceHistory = await this.prisma.price.findMany({
       where: {
         game: { slug },
       },
@@ -127,15 +111,15 @@ export class GamesService {
       },
     });
 
-    if (!lastestPrices.length) {
+    if (!priceHistory.length) {
       throw new NotFoundException('No prices found for this game');
     }
 
-    return lastestPrices;
+    return priceHistory;
   }
 
   async findCompare(slug: string) {
-    const lastestPrices = await this.prisma.price.findMany({
+    const comparePrices = await this.prisma.price.findMany({
       where: {
         game: { slug },
       },
@@ -146,11 +130,11 @@ export class GamesService {
       },
     });
 
-    if (!lastestPrices.length) {
+    if (!comparePrices.length) {
       throw new NotFoundException('No prices found for this game');
     }
 
-    return lastestPrices;
+    return comparePrices;
   }
 
   async findLowest(slug: string) {
