@@ -154,6 +154,20 @@ export class GamesService {
   }
 
   async findLowest(slug: string) {
-    return [];
+    const lowestPrice = await this.prisma.price.findFirst({
+      where: {
+        game: { slug },
+      },
+      orderBy: { finalPrice: 'asc' },
+      include: {
+        store: true,
+      },
+    });
+
+    if (!lowestPrice) {
+      throw new NotFoundException('No prices found for this game');
+    }
+
+    return lowestPrice;
   }
 }
