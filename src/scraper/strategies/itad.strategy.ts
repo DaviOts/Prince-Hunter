@@ -33,14 +33,17 @@ export class ItadStrategy implements ScraperStrategy {
     try {
       //we search the game uuid ITAD
       const searchRes = await fetch(
-        `https://api.isthereanydeal.com/games/search/v1?title=${encodeURIComponent(gameTitle)}&results=5&key=${process.env.ITAD_API_KEY}`,
+        `https://api.isthereanydeal.com/games/search/v1?title=${encodeURIComponent(
+          gameTitle,
+        )}&results=5&key=${process.env.ITAD_API_KEY}`,
       );
-      const rawData = await searchRes.json();
 
       if (!searchRes.ok) return [];
 
-      const searchData = rawData as ItadSearchResult[];
-      const game = searchData.find((d) => d.type === 'game' || d.type === 'package');
+      const searchData = (await searchRes.json()) as ItadSearchResult[];
+      const game = searchData.find(
+        (d) => d.type === 'game' || d.type === 'package',
+      );
 
       const gameUuid = game?.id;
 
@@ -56,8 +59,10 @@ export class ItadStrategy implements ScraperStrategy {
           body: JSON.stringify([gameUuid]),
         },
       );
-      const pricesData = (await pricesRes.json()) as ItadGamePrice[];
 
+      if (!pricesRes.ok) return [];
+
+      const pricesData = (await pricesRes.json()) as ItadGamePrice[];
       const gameData = pricesData[0];
 
       if (!gameData?.deals?.length) return [];
