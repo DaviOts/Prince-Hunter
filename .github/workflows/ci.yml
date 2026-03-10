@@ -10,6 +10,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: "postgresql://user:password@localhost:5432/prince_hunter_test?schema=public"
+
     # define the services postgres and redis
     services:
       postgres:
@@ -59,10 +62,7 @@ jobs:
         run: npm run lint
 
       - name: Run Tests
-        run: npm test -- --ci --runInBand
-        env:
-            # define the database url for tests, we vm dont know the credentials, so we use this to find the database
-          DATABASE_URL: "postgresql://user:password@localhost:5432/prince_hunter_test?schema=public"
+        run: npm run test -- --ci --runInBand
 
       - name: Build Application
         run: npm run build
