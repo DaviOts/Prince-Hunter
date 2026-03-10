@@ -5,6 +5,8 @@
 <h1 align="center">Prince Hunter</h1>
 
 <p align="center">
+  <img src="https://github.com/DaviOts/Prince-Hunter/actions/workflows/ci.yml/badge.svg" alt="Prince-Hunter CI" />
+  <br>
   <b>API de rastreamento e comparação de preços de jogos — EM DESENVOLVIMENTO</b>
 </p>
 
@@ -12,16 +14,17 @@
 
 ## Sobre
 
-Prince Hunter é uma API REST que monitora preços de jogos em múltiplas lojas digitais de forma assíncrona. Ao cadastrar um jogo, o sistema busca preços automaticamente em background via fila de processamento e mantém um histórico completo de variações de preço.
+Prince Hunter é uma API REST robusta construída com NestJS que monitora preços de jogos em múltiplas lojas digitais de forma assíncrona. O sistema utiliza uma arquitetura baseada em eventos e workers para garantir performance e escalabilidade.
 
-### Funcionalidades
+### Funcionalidades Implementadas
 
-- **Busca de preços em múltiplas lojas** — Steam (API direta) + Epic, GOG, Nuuvem, 2game (via IsThereAnyDeal API v2)
-- **Processamento assíncrono** — scraping via BullMQ, response imediato ao cliente
-- **Histórico de preços** — registra variações ao longo do tempo por jogo/loja
-- **Cache com Redis** — evita chamadas desnecessárias às APIs externas (TTL 1h)
-- **Rate Limiting** — proteção contra abuso (100 req/min por IP)
-- **Validação com Zod** — DTOs blindados na entrada
+- **Autenticação Segura** — Sistema de Login/Registro com JWT, Passport.js e hashing de senhas com bcrypt (cost 10).
+- **Busca de preços em múltiplas lojas** — Steam (API direta) + Epic, GOG, Nuuvem, 2game (via IsThereAnyDeal API v2).
+- **Processamento assíncrono** — Arquitetura de filas com BullMQ para scraping resiliente.
+- **Histórico de preços** — Registro temporal de variações de preço por jogo e loja.
+- **Cache Inteligente** — Redis integrado para otimização de chamadas de API externas.
+- **Segurança e Validação** — DTOs blindados com Zod e tratamento semântico de exceções HTTP.
+- **CI/CD Integrado** — Esteira automatizada via GitHub Actions para validação de Lint, Testes e Build.
 
 ---
 
@@ -30,12 +33,23 @@ Prince Hunter é uma API REST que monitora preços de jogos em múltiplas lojas 
 | Camada          | Tecnologia                                           |
 | --------------- | ---------------------------------------------------- |
 | Framework       | [NestJS 11](https://nestjs.com/) (TypeScript)        |
+| Autenticação    | Passport.js + JWT + Bcrypt                           |
 | Banco de dados  | PostgreSQL 16 + [Prisma ORM](https://www.prisma.io/) |
 | Cache & Queue   | Redis 7 + [BullMQ](https://docs.bullmq.io/)          |
 | Validação       | [Zod](https://zod.dev/) via `nestjs-zod`             |
-| Rate Limiting   | `@nestjs/throttler`                                  |
+| CI/CD           | GitHub Actions (Ubuntu + Docker Services)            |
 | Documentação    | Swagger UI (`/api`)                                  |
-| Containerização | Docker Compose                                       |
+
+---
+
+## Padrões de Engenharia
+
+O projeto segue diretrizes rigorosas de engenharia de software:
+
+- **Clean Architecture & SOLID**: Separação clara entre Controllers, Services e Providers.
+- **Strategy Pattern**: Implementação desacoplada para diferentes motores de scraping.
+- **Fail-Fast**: Validação de entrada rigorosa no início do ciclo de vida da requisição.
+- **Identificadores Únicos**: Uso de UUID para integridade referencial no banco de dados.
 
 ---
 
@@ -43,7 +57,7 @@ Prince Hunter é uma API REST que monitora preços de jogos em múltiplas lojas 
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) >= 18
+- [Node.js](https://nodejs.org/) >= 20
 - [Docker](https://www.docker.com/) + Docker Compose
 - Chave da [IsThereAnyDeal API](https://isthereanydeal.com/apps/my/)
 
@@ -55,102 +69,39 @@ git clone https://github.com/DaviOts/Prince-Hunter.git
 cd Prince-Hunter
 
 # 2. Instale as dependências
-npm install
+npm ci
 
 # 3. Configure as variáveis de ambiente
 cp .env.example .env
-# Preencha as variáveis no .env
+# Gere um segredo JWT robusto: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-# 4. Suba os containers (Postgres + Redis)
+# 4. Suba a infraestrutura
 docker compose up -d
 
-# 5. Execute as migrations e seed
-npx prisma migrate dev
-npx prisma db seed
+# 5. Sincronize o banco de dados
+npx prisma db push
 
 # 6. Inicie o servidor
 npm run start:dev
 ```
 
-A API estará disponível em `http://localhost:3000` e o Swagger em `http://localhost:3000/api`.
-
 ---
 
-## Endpoints
+## Endpoints Principais
+
+### Auth
+| Método | Rota             | Descrição                                 |
+| ------ | ---------------- | ----------------------------------------- |
+| `POST` | `/auth/register` | Registro de novo usuário                  |
+| `POST` | `/auth/login`    | Autenticação e geração de JWT             |
+| `GET`  | `/auth/me`       | Retorna dados do usuário logado (Guarded) |
 
 ### Games
-
-| Método | Rota                  | Descrição                                               |
-| ------ | --------------------- | ------------------------------------------------------- |
-| `POST` | `/games`              | Cadastra um jogo e inicia busca de preços em background |
-| `GET`  | `/games`              | Lista todos os jogos com último preço por loja          |
-| `GET`  | `/games?search=`      | Busca jogos por título (case-insensitive)               |
-| `GET`  | `/games/:slug/prices` | Retorna histórico completo de preços de um jogo         |
-
-### Stores
-
-| Método | Rota      | Descrição                        |
-| ------ | --------- | -------------------------------- |
-| `GET`  | `/stores` | Lista todas as lojas cadastradas |
-
-### Scraper
-
-| Método | Rota                  | Descrição                             |
-| ------ | --------------------- | ------------------------------------- |
-| `GET`  | `/scraper/:gameTitle` | Busca preços diretamente (sem salvar) |
-
----
-
-## Arquitetura
-
-```
-POST /games { title: "Cyberpunk 2077" }
-    │
-    ▼
-GamesService
-    ├── prisma.game.upsert()    → Salva game provisório
-    ├── queue.add(job)          → Enfileira no BullMQ
-    └── return 202              → Responde em ~50ms
-
-    (Background - ScraperProcessor)
-    ├── SteamStrategy.getPrice()    → Steam Store API
-    ├── ItadStrategy.getPrice()     → ITAD v2 (Epic, GOG, Nuuvem, 2game)
-    ├── prisma.game.update()        → Atualiza título canônico
-    └── prisma.price.create()       → Salva preços no banco
-```
-
-### Strategy Pattern
-
-Cada loja é uma implementação de `ScraperStrategy`:
-
-```typescript
-interface ScraperStrategy {
-  readonly storeSlug: string;
-  getPrice(gameTitle: string): Promise<PriceResult[]>;
-}
-```
-
-Adicionar uma nova loja = criar uma nova strategy + registrar no module.
-
----
-
-## Modelo de Dados
-
-```
-┌──────────┐       ┌──────────┐       ┌──────────┐
-│   Game   │       │  Price   │       │  Store   │
-├──────────┤       ├──────────┤       ├──────────┤
-│ id       │──┐    │ id       │    ┌──│ id       │
-│ title    │  └───>│ gameId   │    │  │ name     │
-│ slug     │       │ storeId  │<───┘  │ slug     │
-│ imageUrl │       │ finalPrice│      │ url      │
-│ createdAt│       │ original │       │ iconUrl  │
-│ updatedAt│       │ discount │       └──────────┘
-└──────────┘       │ currency │
-                   │ url      │
-                   │ createdAt│
-                   └──────────┘
-```
+| Método | Rota                  | Descrição                                      |
+| ------ | --------------------- | ---------------------------------------------- |
+| `POST` | `/games`              | Inicia busca de preços em background (Guarded) |
+| `GET`  | `/games`              | Lista todos os jogos e preços atuais           |
+| `GET`  | `/games/:slug/prices` | Histórico completo de preços                   |
 
 ---
 
@@ -158,47 +109,30 @@ Adicionar uma nova loja = criar uma nova strategy + registrar no module.
 
 ```
 src/
-├── cache/                    # CacheService (Redis abstraction)
-├── common/
-│   ├── filters/              # HttpExceptionFilter
-│   └── utils/                # generateSlug utility
-├── database/
-│   ├── prisma/               # Schema, migrations, seed
-│   └── redis/                # RedisService (ioredis wrapper)
-├── modules/
-│   ├── games/                # GamesModule (Controller, Service, DTO)
-│   └── stores/               # StoresModule
-├── scraper/
-│   ├── strategies/           # SteamStrategy, ItadStrategy
-│   ├── scraper.service.ts    # Orquestra strategies + cache
-│   ├── scraper.processor.ts  # BullMQ worker (background)
-│   └── scraper.module.ts
-├── app.module.ts
-└── main.ts
+├── auth/                     # JWT, Passport, Guards, Decorators
+├── scraper/                  # Scraper engine & Store strategies
+├── modules/                  # Business logic (Games, Stores, Prices)
+├── database/                 # Prisma & Redis infrastructure
+├── common/                   # Global filters, pipes and utils
+└── main.ts                   # App bootstrapping
 ```
 
 ---
 
-## Variáveis de Ambiente
+## Qualidade e CI/CD
 
-| Variável       | Descrição                          |
-| -------------- | ---------------------------------- |
-| `PORT`         | Porta do servidor (default: 3000)  |
-| `NODE_ENV`     | Ambiente (development/production)  |
-| `POSTGRES_*`   | Credenciais do PostgreSQL          |
-| `DATABASE_URL` | URL de conexão do Prisma           |
-| `REDIS_HOST`   | Host do Redis (default: localhost) |
-| `REDIS_PORT`   | Porta do Redis (default: 6379)     |
-| `ITAD_API_KEY` | Chave da IsThereAnyDeal API        |
-| `ORIGIN`       | Origem permitida no CORS           |
+O projeto utiliza **GitHub Actions** para garantir a saúde do código em cada contribuição:
+
+1. **Linting**: Validação de estilo e boas práticas.
+2. **Database Sync**: Validação de schema Prisma.
+3. **Tests**: Execução de testes automatizados com Postgres e Redis em containers.
+4. **Build**: Verificação de compilação TypeScript.
 
 ---
 
 ## License
 
 This project is [MIT licensed](LICENSE).
-
----
 
 <h4 align="center">Made By Otavszin א♥</h4>
 <p align="center">
