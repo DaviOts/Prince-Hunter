@@ -5,6 +5,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from 'src/users/users.module';
 import { JwtStrategy } from './Jwt.Strategy';
 import { TokenStorageService } from './token-storage.service';
+import { RefreshTokenStrategy } from './refresh-token-strategy';
 
 @Module({
   imports: [
@@ -16,7 +17,12 @@ import { TokenStorageService } from './token-storage.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, TokenStorageService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    TokenStorageService,
+    RefreshTokenStrategy,
+  ],
   exports: [AuthService, TokenStorageService],
 })
 export class AuthModule {}
