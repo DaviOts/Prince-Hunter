@@ -8,6 +8,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { TokenStorageService } from './token-storage.service';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('bcrypt');
 
@@ -36,6 +38,14 @@ describe('AuthService', () => {
         AuthService,
         { provide: UsersService, useValue: mockUsersService },
         { provide: JwtService, useValue: mockJwtService },
+        {
+          provide: TokenStorageService,
+          useValue: { saveRefreshToken: jest.fn() },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('secret') },
+        },
       ],
     }).compile();
 
@@ -76,7 +86,10 @@ describe('AuthService', () => {
         sub: 'uuid-123',
         email,
       });
-      expect(result).toEqual({ access_token: 'jwt-token-abc' });
+      expect(result).toEqual({
+        access_token: 'jwt-token-abc',
+        refresh_token: 'jwt-token-abc',
+      });
     });
 
     it('should throw InternalServerErrorException if createUser fails', async () => {
@@ -131,7 +144,10 @@ describe('AuthService', () => {
         sub: 'uuid-123',
         email,
       });
-      expect(result).toEqual({ access_token: 'jwt-token-xyz' });
+      expect(result).toEqual({
+        access_token: 'jwt-token-xyz',
+        refresh_token: 'jwt-token-xyz',
+      });
     });
   });
 });

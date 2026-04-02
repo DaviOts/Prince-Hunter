@@ -4,9 +4,14 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import type { JwtPayload } from './interface/jwt-payload.interface';
+import type { Response } from 'express';
+import { TokenStorageService } from './token-storage.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthController', () => {
   let controller: AuthController;
+
+  let mockResponse: Response;
 
   const mockAuthService = {
     register: jest.fn(),
@@ -18,8 +23,22 @@ describe('AuthController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: TokenStorageService,
+          useValue: { saveRefreshToken: jest.fn() },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('test-secret') },
+        },
+      ],
     }).compile();
+
+    mockResponse = {
+      cookie: jest.fn().mockReturnThis(),
+    } as unknown as Response;
 
     controller = module.get<AuthController>(AuthController);
   });
@@ -37,7 +56,7 @@ describe('AuthController', () => {
       const expected = { access_token: 'jwt-abc' };
       mockAuthService.register.mockResolvedValue(expected);
 
-      const result = await controller.register(dto);
+      const result = await controller.register(dto, mockResponse);
 
       expect(mockAuthService.register).toHaveBeenCalledWith(
         dto.email,
@@ -56,7 +75,7 @@ describe('AuthController', () => {
       const expected = { access_token: 'jwt-xyz' };
       mockAuthService.login.mockResolvedValue(expected);
 
-      const result = await controller.login(dto);
+      const result = await controller.login(dto, mockResponse);
 
       expect(mockAuthService.login).toHaveBeenCalledWith(
         dto.email,

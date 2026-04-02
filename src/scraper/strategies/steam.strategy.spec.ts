@@ -121,6 +121,8 @@ describe('SteamStrategy', () => {
   });
 
   it('should return empty array when fetch throws network error', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
     jest
       .spyOn(global, 'fetch')
       .mockRejectedValueOnce(new Error('Network timeout'));
