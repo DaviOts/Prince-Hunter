@@ -7,6 +7,7 @@ import { CurrentUser } from './dto/guards/current-user.decorator';
 import type { JwtPayload } from './interface/jwt-payload.interface';
 import { Res } from '@nestjs/common';
 import type { Response } from 'express';
+import { JwtRefreshGuard } from './dto/guards/jwt-refresh.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -57,5 +58,24 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async me(@CurrentUser() user: JwtPayload) {
     return await Promise.resolve(user);
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtRefreshGuard)
+  async refresh(
+    @CurrentUser() user: JwtPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { access_token, refresh_token } =
+      await this.authService.refreshTokenLeak(user.sub, user.email);
+
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { access_token };
   }
 }
