@@ -12,7 +12,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { WatchlistModule } from './modules/watchlist/watchlist.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -45,7 +44,6 @@ import { ConfigModule } from '@nestjs/config';
     }),
     AuthModule,
     UsersModule,
-    WatchlistModule,
   ],
   controllers: [AppController],
   providers: [
