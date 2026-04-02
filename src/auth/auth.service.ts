@@ -30,6 +30,10 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
+  async refreshTokenLeak(userId: string, email: string) {
+    return await this.generateAndSaveTokens(userId, email);
+  }
+
   async register(
     email: string,
     password: string,
