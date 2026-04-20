@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
 }
 
 model Game {
@@ -15,6 +14,7 @@ model Game {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   prices    Price[]
+  watchlists Watchlist[]
 }
 
 model Store {
@@ -46,4 +46,16 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  watchlists Watchlist[]
+}
+
+model Watchlist {
+  id        String   @id @default(uuid())
+  userId    String   
+  user      User     @relation(fields: [userId], references: [id])
+  gameSlug    String 
+  game      Game     @relation(fields: [gameSlug], references: [slug])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, gameSlug])
 }
