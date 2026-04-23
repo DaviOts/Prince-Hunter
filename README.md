@@ -8,6 +8,8 @@
   <img src="https://github.com/DaviOts/Prince-Hunter/actions/workflows/ci.yml/badge.svg" alt="Prince-Hunter CI" />
   <br>
   <b>API de rastreamento e comparação de preços de jogos — EM DESENVOLVIMENTO</b>
+  <br>
+  <a href="README.en.md">🇺🇸 Read in English</a>
 </p>
 
 ---
@@ -23,6 +25,7 @@ Prince Hunter é uma API REST robusta construída com NestJS que monitora preço
 - **Processamento assíncrono** — Arquitetura de filas com BullMQ para scraping resiliente.
 - **Histórico de preços** — Registro temporal de variações de preço por jogo e loja.
 - **Cache Inteligente** — Redis integrado para otimização de chamadas de API externas.
+- **Watchlist & Coleção Pessoal** — Relacionamento N:N otimizado. Permite aos usuários gerenciar jogos salvos com metadados estritos (Status, Notas, Reviews) e consultar os menores preços do mercado em tempo real usando JOINs que evitam queries N+1.
 - **Segurança e Validação** — DTOs blindados com Zod e tratamento semântico de exceções HTTP.
 - **CI/CD Integrado** — Esteira automatizada via GitHub Actions para validação de Lint, Testes e Build.
 
@@ -36,7 +39,7 @@ Prince Hunter é uma API REST robusta construída com NestJS que monitora preço
 | Autenticação    | Passport.js + JWT + Bcrypt                           |
 | Banco de dados  | PostgreSQL 16 + [Prisma ORM](https://www.prisma.io/) |
 | Cache & Queue   | Redis 7 + [BullMQ](https://docs.bullmq.io/)          |
-| Validação       | [Zod](https://zod.dev/) via `nestjs-zod`             |
+| Validação       | Zod (Auth) + class-validator/class-transformer (Watchlist) |
 | CI/CD           | GitHub Actions (Ubuntu + Docker Services)            |
 | Documentação    | Swagger UI (`/api`)                                  |
 
@@ -103,6 +106,14 @@ npm run start:dev
 | `GET`  | `/games`              | Lista todos os jogos e preços atuais           |
 | `GET`  | `/games/:slug/prices` | Histórico completo de preços                   |
 
+### Watchlist
+| Método   | Rota                    | Descrição                                         |
+| -------- | ----------------------- | ------------------------------------------------- |
+| `POST`   | `/watchlist/:slug`      | Adiciona um jogo à lista do usuário (Guarded)     |
+| `GET`    | `/watchlist`            | Retorna a lista com detalhes do jogo e menor preço|
+| `PATCH`  | `/watchlist/:slug`      | Atualiza status, review e nota (DTO Validated)    |
+| `DELETE` | `/watchlist/:slug`      | Remove o jogo da coleção                          |
+
 ---
 
 ## Estrutura do Projeto
@@ -132,7 +143,7 @@ O projeto utiliza **GitHub Actions** para garantir a saúde do código em cada c
 
 ## License
 
-This project is [MIT licensed](LICENSE).
+This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](LICENSE).
 
 <h4 align="center">Made By Otavszin א♥</h4>
 <p align="center">
