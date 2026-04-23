@@ -55,7 +55,18 @@ model Watchlist {
   user      User     @relation(fields: [userId], references: [id])
   gameSlug    String 
   game      Game     @relation(fields: [gameSlug], references: [slug])
+  status    WatchlistStatus @default(PLAN_TO_PLAY)
+  rating    Int?  
+  review    String? @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@unique([userId, gameSlug])
 }
+
+enum WatchlistStatus {
+  PLAYING
+  COMPLETED
+  DROPPED
+  PLAN_TO_PLAY
+}
+
