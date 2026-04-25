@@ -87,19 +87,28 @@ export class WatchlistService {
     rating?: number,
     review?: string,
   ) {
-    const game = await this.prisma.watchlist.update({
-      where: {
-        userId_gameSlug: {
-          userId,
-          gameSlug,
+    try {
+      const watchlist = await this.prisma.watchlist.update({
+        where: {
+          userId_gameSlug: {
+            userId,
+            gameSlug,
+          },
         },
-      },
-      data: {
-        status,
-        rating,
-        review,
-      },
-    });
-    return game;
+        data: {
+          status,
+          rating,
+          review,
+        },
+      });
+      return watchlist;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException('Game not found in watchlist');
+        }
+      }
+      throw error;
+    }
   }
 }

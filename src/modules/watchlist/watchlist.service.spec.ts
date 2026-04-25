@@ -121,4 +121,24 @@ describe('WatchlistService', () => {
     });
     expect(result).toEqual(watchlist);
   });
+
+  it('should throw error when update game is not in watchlist', async () => {
+    const gameSlug = 'elden-ring';
+    const userId = 'user-1';
+    const error = new Prisma.PrismaClientKnownRequestError(
+      'Unique constraint violation',
+      {
+        code: 'P2002',
+        clientVersion: '0.0.0',
+      },
+    );
+    mockPrisma.game.findUnique.mockResolvedValue({
+      id: 'g1',
+      slug: 'elden-ring',
+    });
+    mockPrisma.watchlist.update.mockRejectedValue(error);
+    await expect(service.addGameToWatchlist(gameSlug, userId)).rejects.toThrow(
+      ConflictException,
+    );
+  });
 });
