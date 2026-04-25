@@ -3,7 +3,7 @@ import { GamesService } from './games.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { NotFoundException } from '@nestjs/common';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 
 describe('GamesService', () => {
   let service: GamesService;

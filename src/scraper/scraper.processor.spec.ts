@@ -3,7 +3,7 @@ import { ScraperProcessor } from './scraper.processor';
 import { ScraperService } from './scraper.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { PriceResult } from './strategies/scraper-strategy.interface';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Decimal } from '@prisma/client/runtime/client';
 import { CacheService } from 'src/cache/cache.service';
 
 // Typed mock matching ScrapeJobData shape
