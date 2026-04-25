@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WatchlistService } from './watchlist.service';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 import { Prisma, WatchlistStatus } from '@prisma/client';
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('WatchlistService', () => {
   let service: WatchlistService;
@@ -126,9 +126,9 @@ describe('WatchlistService', () => {
     const gameSlug = 'elden-ring';
     const userId = 'user-1';
     const error = new Prisma.PrismaClientKnownRequestError(
-      'Unique constraint violation',
+      'No records found.',
       {
-        code: 'P2002',
+        code: 'P2025',
         clientVersion: '0.0.0',
       },
     );
@@ -137,8 +137,52 @@ describe('WatchlistService', () => {
       slug: 'elden-ring',
     });
     mockPrisma.watchlist.update.mockRejectedValue(error);
-    await expect(service.addGameToWatchlist(gameSlug, userId)).rejects.toThrow(
-      ConflictException,
+    await expect(service.updateWatchlist(gameSlug, userId)).rejects.toThrow(
+      NotFoundException,
     );
+  });
+
+  it('should throw error when game is not found', async () => {
+    const gameSlug = 'elden-ring';
+    const userId = 'user-1';
+    mockPrisma.game.findUnique.mockResolvedValue(null);
+    await expect(service.addGameToWatchlist(gameSlug, userId)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('database crash should throw an exception', async () => {
+    const gameSlug = 'elden-ring';
+    const userId = 'user-1';
+    mockPrisma.game.findUnique.mockResolvedValue({
+      id: 'g1',
+      slug: 'elden-ring',
+    });
+    mockPrisma.watchlist.create.mockRejectedValue(new Error('Database crash'));
+    await expect(service.addGameToWatchlist(gameSlug, userId)).rejects.toThrow(
+      Error,
+    );
+  });
+
+  it('should throw an exception when game remove not exist', async () => {
+    const gameSlug = 'elden-ring';
+    const userId = 'user-1';
+    const error = new NotFoundException('Game not found in watchlist');
+    mockPrisma.game.findUnique.mockResolvedValue(null);
+    mockPrisma.watchlist.delete.mockRejectedValue(error);
+    await expect(
+      service.removeGameFromWatchlist(gameSlug, userId),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('should throw an exception when user doesnt have any game in his watchlist', async () => {
+    const userId = 'user-1';
+    const error = new Error('game not found in watchlist');
+    mockPrisma.game.findUnique.mockResolvedValue({
+      id: 'g1',
+      slug: 'elden-ring',
+    });
+    mockPrisma.watchlist.findMany.mockRejectedValue(error);
+    await expect(service.getWatchlist(userId)).rejects.toThrow(Error);
   });
 });
