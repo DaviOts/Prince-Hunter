@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://github.com/DaviOts/Prince-Hunter/actions/workflows/ci.yml/badge.svg" alt="Prince-Hunter CI" />
   <br>
-  <b>API de rastreamento e comparação de preços de jogos — EM DESENVOLVIMENTO</b>
+  <b>API de rastreamento e comparação de preços de jogos</b>
   <br>
   <a href="README.en.md">🇺🇸 Read in English</a>
 </p>
